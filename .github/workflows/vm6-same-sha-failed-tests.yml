@@ -3,22 +3,24 @@ on:
   pull_request:
     branches:
       - main
-      - vm6-same-sha-alt-base-20260917
+      - vm6-same-sha-alt2-20260917
 permissions:
   contents: read
 jobs:
   failed-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - name: Produce artifact from checked-out merge context
+      - name: Produce failed-tests artifact from trusted PR base context
+        env:
+          VM6_BASE_REF: ${{ github.base_ref }}
         shell: python
         run: |
+          import os
           from pathlib import Path
-          mode = Path("vm6-base-context.txt").read_text().strip()
-          failures = ["tests/test_vm6_required.py::test_required"] if mode == "FAIL" else []
+          base = os.environ["VM6_BASE_REF"]
+          failures = ["tests/test_vm6_required.py::test_required"] if base == "main" else []
           Path("failed-tests.txt").write_text("\n".join(failures) + ("\n" if failures else ""))
-          print(f"VM6_BASE_CONTEXT={mode}")
+          print(f"VM6_BASE_REF={base}")
           print(f"VM6_FAILURE_COUNT={len(failures)}")
       - uses: actions/upload-artifact@v4
         with:
